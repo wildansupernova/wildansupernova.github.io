@@ -1,0 +1,100 @@
+<center>
+<title>Twibbon Merger - Layanan Untuk Panitia</title>
+
+ <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
+<script src="html2canvas.min.js"></script>
+
+<style>
+      .photo-container {
+            width: 320px;
+            height: 320px;
+            overflow: hidden;
+            position: relative;
+            margin: auto;
+        }
+     #foto{
+         max-height: 100%;
+        max-width: 100%;
+        position: absolute;
+        top: 0%;
+        left: 0%;    	
+     }
+    #frame {
+        max-height: 100%;
+        max-width: 100%;
+        position: absolute;
+        top: 0%;
+        left: 0%;
+    }
+</style>
+
+<script type="text/javascript">
+	function display() {
+        var oFReader = new FileReader();
+        oFReader.readAsDataURL(document.getElementById("avatar").files[0]);
+        var img = document.getElementById("frame");
+        oFReader.onload = function (oFREvent) {
+            img.src = oFREvent.target.result;
+        };
+    }
+ 	function displayFoto() {
+        var oFReader = new FileReader();
+        oFReader.readAsDataURL(document.getElementById("fotomu").files[0]);
+        var img = document.getElementById("foto");
+        oFReader.onload = function (oFREvent) {
+            img.src = oFREvent.target.result;
+        };
+    }
+    function downloadURI(uri, name) {
+        var link = document.createElement("a");
+
+        link.download = name;
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        //after creating link you should delete dynamic link
+        //clearDynamicLink(link);
+    }
+    function renderContent() {
+        var content = document.getElementById("content");
+
+
+
+
+		html2canvas(document.querySelector("#content")).then(canvas => {
+		    //document.body.appendChild(canvas)
+		    var myImage = canvas.toDataURL("image/png");
+		    downloadURI(myImage,"fotoMu.png");
+		});
+
+
+    }
+    function setPixel() {
+    	var nilai = document.getElementById("nilainya").value
+    	document.getElementById("content").style.width = nilai;
+    	document.getElementById("content").style.height = nilai;
+    }
+</script>
+
+
+<div class ="photo-container" id = "content">
+	<img src="" id="foto">
+	
+	<img src="" id="frame">
+</div>
+<p> Tools untuk yang malas ngedit foto</p>
+<div class="" id="">
+	<p>Jangan lupa yak, fotomo dibuat square dulu (crop di hape gitu)</p>
+	<p> 1. Set Pixel (Default 320px) </p>
+	<input type="number" name="setPixel"  value="320" id="nilainya" name="nilainya"><span> px</span>
+	<button class="w3-btn w3-ripple w3-blue btn-primary form-control " onclick="setPixel()" style="width: 200px;display: inline-block;">Set Pixel</button>
+	<p> 2. Upload Twibbon</p>
+    <input class="" id="avatar" name="avatar" onchange="display()" placeholder="Foto" accept="image/jpeg, image/png" type="file">
+	<p> 3. Upload Fotomu</p>
+    <input class="" id="fotomu" name="fotomu" onchange="displayFoto()" placeholder="Foto" accept="image/jpeg, image/png" type="file">
+</div>
+
+
+	<button class="w3-btn w3-ripple w3-blue btn-primary form-control" onclick="renderContent()" style="width: 200px;display: inline-block;">Download</button>
+
+</center>
