@@ -57,7 +57,7 @@ This approach ensures that each IGS node can generate IDs independently and at h
 
 In summary, for moderate traffic, a SQL auto-increment counter works well. For high-throughput scenarios, a distributed IGS solution is preferred, as it reduces database contention and scales efficiently. In both cases, converting the numeric ID to a base-62 string yields the compact, collision-free short URLs required for services like Bit.ly.
 
-![alt text](Id-Generations-image-1.png)
+![Distributed ID Generation Service Architecture](/assets/images/Id-Generations-image-1.png)
 
 ---
 ### Step-by-Step Guide to Choosing an ID Generation Strategy
