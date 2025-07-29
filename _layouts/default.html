@@ -20,5 +20,42 @@
     <footer class="wrapper-footer">
         {% include footer.html %}
     </footer>
+    
+    {% if page.mermaid or site.mermaid %}
+    <script>
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const mermaidBlocks = document.querySelectorAll('code.language-mermaid');
+            mermaidBlocks.forEach((block, index) => {
+                // Create a temporary div to decode HTML entities
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = block.innerHTML;
+                const decodedText = tempDiv.textContent || tempDiv.innerText || '';
+                
+                const mermaidDiv = document.createElement('div');
+                mermaidDiv.className = 'mermaid';
+                mermaidDiv.textContent = decodedText;
+                mermaidDiv.id = 'mermaid-' + index;
+                
+                // Replace the entire <pre> element (parent of <code>)
+                const preElement = block.parentNode;
+                preElement.parentNode.replaceChild(mermaidDiv, preElement);
+            });
+            
+            if (mermaidBlocks.length > 0) {
+                mermaid.init();
+            }
+        });
+    </script>
+    {% endif %}
 </body>
 </html>

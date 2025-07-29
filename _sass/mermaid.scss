@@ -1,0 +1,24 @@
+.mermaid {
+    text-align: center;
+    margin: 2rem auto;
+    max-width: 100%;
+    overflow-x: auto;
+    background-color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e1e5e9;
+    
+    svg {
+        max-width: 100%;
+        height: auto;
+        background-color: white;
+    }
+}
+
+@media (max-width: 768px) {
+    .mermaid {
+        margin: 1rem auto;
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+}

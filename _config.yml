@@ -46,3 +46,6 @@ plugins:
   - jekyll-paginate-v2
   - jekyll-seo-tag
 
+# Mermaid diagrams
+mermaid: true
+
