@@ -136,8 +136,11 @@ An idempotency key is a unique identifier associated with a specific client requ
 3. **Server Processing**: The server uses this key to determine if it's processing a new request or a retry of a previous request
 
 Example request:
-```
-POST /api/payments HTTP/1.1
+
+<details>
+<summary>Click to view example HTTP request</summary>
+
+<pre><code class="language-http">POST /api/payments HTTP/1.1
 Host: example.com
 Content-Type: application/json
 Idempotency-Key: 123e4567-e89b-12d3-a456-426614174000
@@ -147,7 +150,9 @@ Idempotency-Key: 123e4567-e89b-12d3-a456-426614174000
   "currency": "USD",
   "destination": "account-456"
 }
-```
+</code></pre>
+
+</details>
 
 ## When Should Clients Regenerate Idempotency Keys?
 
@@ -156,28 +161,59 @@ From an API system perspective, such as with Stripe's Create Payment API, the id
 
 # Approaches
 
-In this section, I will give you some of the implementation approaches that I have found during my careers as software engineer. But before that I want to define API requirements and here I will simulate `POST /api/payments` API idempotency handling.
+In this section, I will give you some of the implementation approaches that I have found during my careers as software engineer and also common pitfalls. But before that I want to define API requirements and here I will simulate `POST /api/payments` API idempotency handling.
 
 ## API Requirements
 
-1. The client must send a `POST /api/payments` request with both an idempotency key and an API key for authentication.
-    ```
-    POST /api/payments HTTP/1.1
-    Host: example.com
-    Content-Type: application/json
-    Idempotency-Key: 123e4567-e89b-12d3-a456-426614174000
-    Api-Key: Merchant-Server-Key-5fc07d0d-3469-46a7-9e76-029c1c4cb002
-    Request Body
-    {
-      "amount": 100.00,
-      "currency": "USD",
-      "destination": "account-456"
-    }
+- The client must send a `POST /api/payments` request with both an idempotency key and an API key for authentication.
 
-    Response
-    {
-        "payment_id": "payment-id-1"
-    }
-    ```
-2. The API must allow clients to retry requests with the same idempotency key during network instability or server errors, ensuring no duplicate payments occur. Each identical request with the same idempotency key is processed as a single operation.
-3. If a subsequent request arrives with the same idempotency key but a different payload or different user, the system must respond with HTTP 409 Conflict.
+<details>
+<summary>Click to view API request/response example</summary>
+
+<pre><code class="language-http">POST /api/payments HTTP/1.1
+Host: example.com
+Content-Type: application/json
+Idempotency-Key: 123e4567-e89b-12d3-a456-426614174000
+Api-Key: Merchant-Server-Key-5fc07d0d-3469-46a7-9e76-029c1c4cb002
+
+Request Body:
+{
+  "amount": 100.00,
+  "currency": "USD",
+  "destination": "account-456"
+}
+
+Response:
+{
+    "payment_id": "payment-id-1"
+}
+</code></pre>
+
+</details>
+
+- The API must allow clients to retry requests with the same idempotency key during network instability or server errors, ensuring no duplicate payments occur. Each identical request with the same idempotency key is processed as a single operation.
+- If a subsequent request arrives with the same idempotency key but a different payload or different user, the system must respond with HTTP 409 Conflict.
+
+
+## Approach 1 - Using Redis
+
+In my experience, many engineers instinctively turn to Redis as a solution for this problem. While not inherently wrong, it's often implemented incorrectly. Let's examine a common example:
+
+```python
+class PaymentController:
+    # redis & db initiated
+    def create_payment(self, idempotency_key, amount, currency, source_wallet, destination):
+        if self.redis.is_exist(idempotency_key):
+            raise DuplicateKeyException()
+        value = ""
+        time_to_live_seconds = 84600
+        self.redis.set(idempotency_key, value, time_to_live_seconds)
+        response = self.db.save_payment(amount, currency, source_wallet, destination)
+        self.redis.set(idempotency_key, response, time_to_live_seconds)
+```
+
+What's the flaw in the code above? If you identified the race condition around `if self.redis.is_exist(idempotency_key):`, you're correct. Imagine two simultaneous requests checking for the key's existence. Since the key hasn't been set yet, neither request triggers the error, both proceed to set the idempotency key to an empty string, and the payment gets duplicated. Shockingly, I encountered this similar code running in production, written by another engineer.
+
+How can we solve this? Redis provides atomic operations, meaning commands like [SETNX](https://redis.io/docs/latest/commands/setnx/) (Set if Not Exists) are executed in a single step, preventing race conditions. By using SETNX, we ensure that only the first request with a given idempotency key will proceed, and any subsequent requests with the same key will be safely ignored or handled as duplicates.
+
+Here's how you can revise the code to use SETNX for atomic idempotency key handling:
