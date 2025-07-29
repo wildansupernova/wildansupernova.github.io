@@ -165,7 +165,7 @@ In this section, I will give you some of the implementation approaches that I ha
 
 ## API Requirements
 
-- The client must send a `POST /api/payments` request with both an idempotency key and an API key for authentication.
+1. The client must send a `POST /api/payments` request with both an idempotency key and an API key for authentication.
 
 <details>
 <summary>Click to view API request/response example</summary>
@@ -191,8 +191,9 @@ Response:
 
 </details>
 
-- The API must allow clients to retry requests with the same idempotency key during network instability or server errors, ensuring no duplicate payments occur. Each identical request with the same idempotency key is processed as a single operation.
-- If a subsequent request arrives with the same idempotency key but a different payload or different user, the system must respond with HTTP 409 Conflict.
+2. The API must allow clients to retry requests with the same idempotency key during network instability or server errors, ensuring no duplicate payments occur. Each identical request with the same idempotency key is processed as a single operation.
+3. If a subsequent request arrives with the same idempotency key but a different payload or different user, the system must respond with HTTP 409 Conflict.
+4. Idempotency keys are typically valid only for a limited period—commonly one day—to balance reliability and resource usage. This practice helps prevent indefinite storage of keys and aligns with industry standards; for example, [Stripe documentation](https://docs.stripe.com/api/idempotent_requests) specifies that idempotency keys are pruned after 24 hours.
 
 
 ## Approach 1 - Using Redis
@@ -217,3 +218,16 @@ What's the flaw in the code above? If you identified the race condition around `
 How can we solve this? Redis provides atomic operations, meaning commands like [SETNX](https://redis.io/docs/latest/commands/setnx/) (Set if Not Exists) are executed in a single step, preventing race conditions. By using SETNX, we ensure that only the first request with a given idempotency key will proceed, and any subsequent requests with the same key will be safely ignored or handled as duplicates.
 
 Here's how you can revise the code to use SETNX for atomic idempotency key handling:
+```python
+class PaymentController:
+    # redis & db initiated
+    def create_payment(self, idempotency_key, amount, currency, source_wallet, destination):
+        time_to_live_seconds = 84600
+        value = ""
+        result = self.redis.setnx(idempotency_key, value, time_to_live_seconds)
+        if result == None:
+            # Key already exists, check if processing is complete
+            raise DuplicateKeyException()
+        response = self.db.save_payment(amount, currency, source_wallet, destination)
+        self.redis.set(idempotency_key, response, time_to_live_seconds)
+```
