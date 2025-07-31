@@ -3,7 +3,7 @@ layout: post
 author: Wildan Alnatara
 title: How to Implement Idempotent APIs Properly
 date: 2025-05-12
-categories: [API Design, Backend Development]
+categories: []
 tags: [idempotency, rest-api, distributed-systems, reliability]
 mermaid: true
 auto_number_headers: true
