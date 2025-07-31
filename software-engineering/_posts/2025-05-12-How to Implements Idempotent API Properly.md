@@ -238,7 +238,7 @@ class PaymentController:
         self.redis.set(idempotency_key, response, time_to_live_seconds)
         return response
 ```
-The revised code above satisfies API requirements 1, 2, and 3. However, requirements 4 and 5 are not fully addressed. If a database error occurs, the user may receive a DuplicateKeyException, without clarity on whether the payment was actually saved. Since errors can happen before or after data is persisted, this ambiguity may confuse API consumers. Next, I will provide a more robust code example for handling idempotency with Redis. You can take a look first on the `create_payment` method.
+The revised code above satisfies API requirements 1, 2, and 3. However, requirements 4 and 5 are not fully addressed. If a database error occurs, the user may receive a DuplicateKeyException, without clarity on whether the payment was actually saved. Since errors can happen before or after data is persisted, this ambiguity may confuse API consumers. Next, I will provide a more robust and ideal code example for handling idempotency with Redis. You can take a look first on the `create_payment` method.
 
 ```python
 import hashlib
@@ -311,7 +311,7 @@ class PaymentController:
         # Isolate idempotency key by user to prevent cross-user conflicts
         # This ensures different users can use the same idempotency key safely
         isolated_idempotency_key = f"{user_id}:{idempotency_key}"
-        payment = Payment(payment_id, user_id, isolated_idempotency_key, amount, currency, source_account_wallet destination_account_wallet)
+        payment = Payment(payment_id, user_id, isolated_idempotency_key, amount, currency, source_account_wallet, destination_account_wallet)
         value = ("SAVING", payment.get_hash(), Payment.serialize(payment))
 
         # Redis try to set the key value, NX means if it is already exist, it will not update the value and will return None
@@ -372,7 +372,7 @@ sequenceDiagram
     deactivate P
 ```
 
-### Failure Case Analysis
+### Approach 1 - Failure Case Analysis
 
 Based on the sequence diagram above, each arrow (representing request or response flows) can be a potential point of failure. Let's examine five critical failure scenarios:
 
@@ -478,4 +478,57 @@ class PaymentController:
             return payment
 ```
 
-In the code above, we eliminate the need to check if a payment with the same idempotency key already exists because the unique index constraint provides this protection. To complete the solution, we need a background worker that periodically removes expired idempotency keys. This worker can filter records by `created_at` and `idempotency_key IS NOT NULL` to identify payments with unexpired idempotency keys, then set the `idempotency_key` field to `NULL` for expired entries.
+In the code above, we eliminate the need to check if a payment with the same idempotency key already exists because the unique index constraint provides this protection. To complete the solution, we need a background worker that periodically removes expired idempotency keys. This worker can filter records by `created_at` and `idempotency_key IS NOT NULL` to identify payments with unexpired idempotency keys, then set the `idempotency_key` field to `NULL` for expired entries. 
+
+### Approach 2 - Failure Case Analysis
+Failure scenarios for the database approach are straightforward:
+
+1. **Service crashes after saving data but before responding to the client:**
+   - The client can safely retry the request.
+   - On retry, the service detects the duplicate key and returns a successful response, guaranteeing no duplicate payment is created.
+
+2. **Service crashes before saving data:**
+   - No data is persisted, so a retry simply processes the request as new.
+   - There is no risk of duplicate records.
+
+### Approach 2 - FAQ 
+1. **Q1: Is this it? Any fatal failure case we must consider?**
+
+    <details>
+    <summary>Click to view answer</summary>
+
+    A critical failure case arises in high-availability (HA) setups, such as Patroni for PostgreSQL. If the master node fails, the system may automatically promote a replica to master. Imagine a scenario where payment data is saved on the master but hasn't yet replicated to the replica. If the replica is promoted to master and the client retries the request, it could lead to conflicts when the original master recovers. This requires manual reconciliation, especially if downstream services (e.g., payment gateways) have already been called.
+
+    To mitigate this, you can choose one of these:
+    - Enable synchronous replication for at least one replica to ensure data consistency before promotion. However, this increases latency.
+    - Disable automatic HA failover or ensure the replica's replication lag is zero before promotion. This approach prioritizes consistency but may result in downtime.
+
+    This trade-off reflects the CAP theorem: in a network partition, you must choose between availability and consistency. Opting for consistency ensures data integrity but may cause downtime, while prioritizing availability risks data inconsistency. Choose based on your system's requirements.
+
+    </details>
+
+# Conclusion and Tips to Choose
+
+Both approaches are viable solutions and are used in production environments. Below are the pros and cons of each approach:
+
+1. **Approach 1 - Redis**
+    - **Pros**: 
+        - Simplifies idempotency key management with built-in Time to Live (TTL) functionality.
+        - Faster lookups from memory, reducing latency.
+    - **Cons**: 
+        - Adds complexity to the system.
+        - Introduces an additional point of failure (Redis) alongside the database.
+
+2. **Approach 2 - Direct Database Idempotency Solution**
+    - **Pros**: 
+        - Simpler architecture with only one point of failure (the database).
+        - Adding a background worker for key expiration does not significantly increase complexity.
+    - **Cons**: 
+        - May require additional database resources to handle idempotency key storage and expiration.
+        - Potentially slower compared to in-memory solutions like Redis, especially under high load. If you consider adding redis is more cheap than applying vertical scaling to the database under that load, then you migh be want to consider redis approach.
+
+From a practical perspective, starting with the second approach is often preferable due to its simplicity and ease of maintenance. As load increases, we can do vertical scaling by adding more resources. Modern cloud solutions, such as AWS EC2 i7ie.48xlarge, offer substantial capacity with up to 16 × 7,500 GB NVMe SSD (120 TB total), 192 vCPUs, and ~1536 GiB RAM, which can handle most use cases. However, if your use case exceeds these limits or budget constraints make such resources impractical, the first approach may be worth considering. Additionally, you can adopt a less stringent version of the first approach, fulfilling only API requirements 1, 2, and 3, by implementing the simpler algorithm discussed earlier.
+
+Implementing idempotent APIs is essential for building reliable distributed systems. Both Redis-based and direct database approaches share the same core principles: uniquely identify each request, detect duplicates, and ensure consistent responses. The best method depends on your requirements, infrastructure, and expected traffic. Idempotency is a key part of your API contract, not just a technical detail. By handling idempotent operations correctly, you offer users a dependable experience, minimize data inconsistencies, and strengthen trust in your services. As distributed systems grow in complexity, idempotency remains a foundational element of robust API design. 
+
+Thank you for reading this blog post. I hope you found the content helpful and informative.
