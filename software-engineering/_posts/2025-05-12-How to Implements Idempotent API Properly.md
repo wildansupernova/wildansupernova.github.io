@@ -529,6 +529,8 @@ Both approaches are viable solutions and are used in production environments. Be
 
 From a practical perspective, starting with the second approach is often preferable due to its simplicity and ease of maintenance. As load increases, we can do vertical scaling by adding more resources. Modern cloud solutions, such as AWS EC2 i7ie.48xlarge, offer substantial capacity with up to 16 × 7,500 GB NVMe SSD (120 TB total), 192 vCPUs, and ~1536 GiB RAM, which can handle most use cases. However, if your use case exceeds these limits or budget constraints make such resources impractical, the first approach may be worth considering. Additionally, you can adopt a less stringent version of the first approach, fulfilling only API requirements 1, 2, and 3, by implementing the simpler algorithm discussed earlier.
 
+<br>
 Implementing idempotent APIs is essential for building reliable distributed systems. Both Redis-based and direct database approaches share the same core principles: uniquely identify each request, detect duplicates, and ensure consistent responses. The best method depends on your requirements, infrastructure, and expected traffic. Idempotency is a key part of your API contract, not just a technical detail. By handling idempotent operations correctly, you offer users a dependable experience, minimize data inconsistencies, and strengthen trust in your services. As distributed systems grow in complexity, idempotency remains a foundational element of robust API design. 
 
+<br>
 Thank you for reading this blog post. I hope you found the content helpful and informative.
