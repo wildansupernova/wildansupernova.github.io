@@ -1,0 +1,90 @@
+/* Rouge syntax highlighter line numbers styling - only for code blocks */
+.highlight .rouge-table {
+  border: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.highlight .rouge-table tbody {
+  border: 0;
+}
+
+.highlight .rouge-table tbody tr {
+  border: 0;
+}
+
+.highlight .rouge-table tbody tr td {
+  border: 0;
+  padding: 0;
+  vertical-align: top;
+}
+
+/* Line numbers column - only for multi-line code blocks */
+.highlight .rouge-gutter {
+  background: #2d2d2d;
+  color: #666;
+  border-right: 1px solid #565656;
+  text-align: right;
+  user-select: none;
+  width: 3em;
+  padding: 1em 0.8em 1em 0;
+}
+
+.highlight .rouge-gutter .lineno {
+  color: #666;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  line-height: 1.5;
+}
+
+/* Code column - only for multi-line code blocks */
+.highlight .rouge-code {
+  background: #2d2d2d;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+.highlight .rouge-code pre {
+  margin: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: #ccc;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  line-height: 1.5;
+}
+
+/* Container styling for multi-line code blocks */
+.highlight {
+  background: #2d2d2d;
+  border-radius: 4px;
+  margin: 0.5em 0;
+  overflow: hidden;
+}
+
+/* Remove default pre styling for Rouge multi-line blocks */
+.highlight pre {
+  background: transparent;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Inline code styling - NO line numbers */
+code.highlighter-rouge {
+  background: #2d2d2d;
+  color: #ccc;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+}
+
+/* Prevent line numbers on inline code */
+code.highlighter-rouge .rouge-table,
+code.highlighter-rouge .rouge-gutter,
+code.highlighter-rouge .lineno {
+  display: none !important;
+}
+.line-numbers .line-numbers-rows {
+    background: inherit;
+}

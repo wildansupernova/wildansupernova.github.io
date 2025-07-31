@@ -21,6 +21,15 @@ sass:
   sass_dir: _sass
   style: expanded # compact, expanded or compressed
 
+# Syntax highlighting
+highlighter: rouge
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
 # Paginate
 pagination:
   enabled: true
