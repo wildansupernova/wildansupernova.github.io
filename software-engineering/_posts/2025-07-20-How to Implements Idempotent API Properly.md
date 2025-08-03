@@ -2,7 +2,7 @@
 layout: post
 author: Wildan Alnatara
 title: How to Implement Idempotent APIs Properly
-date: 2025-05-12
+date: 2025-07-20
 categories: []
 tags: [idempotency, rest-api, distributed-systems, reliability]
 mermaid: true
