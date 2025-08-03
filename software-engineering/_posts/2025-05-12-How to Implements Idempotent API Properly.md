@@ -11,7 +11,11 @@ auto_number_headers: true
 
 # Introduction
 
-Imagine a scenario where you're transferring money from your bank account to another account. During the transfer, a network problem causes a timeout, and as a user, you click the "Transfer" button again. The second attempt succeeds, but to your horror, you discover your account has been debited twice for the same transaction. This unpleasant experience is exactly what API idempotency aims to prevent.
+Throughout my career as a software engineer, I've frequently encountered even senior engineers implementing idempotent APIs incorrectly or making unnecessary technical decisions that complicate systems without real benefit. This blog post is written to help senior engineers and technical leads understand the right way to implement idempotency, avoid common pitfalls, and make informed architectural choices.
+
+To illustrate why idempotency matters, consider the following scenario:
+
+Imagine a situation where you're transferring money from your bank account to another account. During the transfer, a network problem causes a timeout, and as a user, you click the "Transfer" button again. The second attempt succeeds, but to your horror, you discover your account has been debited twice for the same transaction. This unpleasant experience is exactly what API idempotency aims to prevent.
 
 In distributed systems and APIs, idempotency ensures that multiple identical requests have the same effect as a single request. This property is crucial for building reliable systems, especially when handling financial transactions, order submissions, or any operation where duplicates could cause serious problems.
 
