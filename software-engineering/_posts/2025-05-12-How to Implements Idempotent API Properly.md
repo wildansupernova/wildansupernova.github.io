@@ -156,7 +156,7 @@ sequenceDiagram
     deactivate Gateway
     deactivate Order
 
-    Note right of DB: Only one order created<br/>race condition avoided!
+    Note right of DB: Only one order created here!
 ```
 
 These diagrams illustrate why idempotency is crucial for maintaining data integrity during network failures or client retries.
