@@ -34,15 +34,54 @@ An idempotent API exhibits several key characteristics:
 
 HTTP methods have inherent idempotency properties:
 
-| Method | Idempotent? | Notes |
-|--------|-------------|-------|
-| GET    | Yes         | Retrieving data has no side effects |
-| HEAD   | Yes         | Similar to GET but returns only headers |
-| OPTIONS| Yes         | Returns communication options |
-| PUT    | Yes         | Replaces target resource with the request payload |
-| DELETE | Yes         | Resource remains deleted after first successful call |
-| POST   | No          | Generally creates new resources/entries with each call |
-| PATCH  | No*         | Depends on the implementation (*can be made idempotent) |
+<div style="overflow-x:auto; margin-bottom:1em;">
+<table style="border-collapse:collapse; width:100%; border:1px solid #ccc;">
+  <thead>
+    <tr style="background:#000;">
+      <th style="border:1px solid #ccc; padding:8px;">Method</th>
+      <th style="border:1px solid #ccc; padding:8px;">Idempotent?</th>
+      <th style="border:1px solid #ccc; padding:8px;">Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border:1px solid #ccc; padding:8px;">GET</td>
+      <td style="border:1px solid #ccc; padding:8px;">Yes</td>
+      <td style="border:1px solid #ccc; padding:8px;">Retrieving data has no side effects</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc; padding:8px;">HEAD</td>
+      <td style="border:1px solid #ccc; padding:8px;">Yes</td>
+      <td style="border:1px solid #ccc; padding:8px;">Similar to GET but returns only headers</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc; padding:8px;">OPTIONS</td>
+      <td style="border:1px solid #ccc; padding:8px;">Yes</td>
+      <td style="border:1px solid #ccc; padding:8px;">Returns communication options</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc; padding:8px;">PUT</td>
+      <td style="border:1px solid #ccc; padding:8px;">Yes</td>
+      <td style="border:1px solid #ccc; padding:8px;">Replaces target resource with the request payload</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc; padding:8px;">DELETE</td>
+      <td style="border:1px solid #ccc; padding:8px;">Yes</td>
+      <td style="border:1px solid #ccc; padding:8px;">Resource remains deleted after first successful call</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc; padding:8px;">POST</td>
+      <td style="border:1px solid #ccc; padding:8px;">No</td>
+      <td style="border:1px solid #ccc; padding:8px;">Generally creates new resources/entries with each call</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc; padding:8px;">PATCH</td>
+      <td style="border:1px solid #ccc; padding:8px;">No*</td>
+      <td style="border:1px solid #ccc; padding:8px;">Depends on the implementation (*can be made idempotent)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 Understanding these properties is essential for designing reliable APIs, especially in distributed systems where network failures and retries are common occurrences.
 
@@ -62,32 +101,25 @@ To visualize the challenges of non-idempotent operations in distributed systems,
 
 ```mermaid
 sequenceDiagram
-    title Order Processing Without Idempotency
-    
-    participant Client as Client App
-    participant Gateway as API Gateway
-    participant Order as Order Service
-    participant DB as Database
+  participant Client as Client App
+  participant Gateway as API Gateway
+  participant Order as Order Service
+  participant DB as Database
 
-    Client->>Gateway: POST /orders
-    activate Gateway
-    Gateway->>Order: Create order request
-    activate Order
-    Order->>DB: Insert new order
-    DB-->>Order: Success
-    Order-->>Gateway: Order created
-
-    Note over Gateway: Network timeout<br/>before response received
-    Gateway->>Order: Retry - Create order request
-    Order->>DB: Insert new order (again!)
-    DB-->>Order: Success
-    Order-->>Gateway: Order created (duplicate)
-
-    Gateway-->>Client: 201 Created
-    deactivate Gateway
-    deactivate Order
-
-    Note right of DB: Two identical orders<br/>created for single request!
+  Client ->>+ Gateway: POST /orders
+  Gateway ->>+ Order: Create order request
+  Order ->> DB: Insert new order
+  DB -->> Order: Success
+  Order -->> Gateway: Order created
+  Gateway --x Client: 201 Created
+  Note over Gateway: Network timeout<br/>before client response received
+  Client ->> Gateway: Client App Retry<br> POST /orders
+  Gateway ->> Order: Retry - Create order request
+  Order ->> DB: Insert new order (again!)
+  DB -->> Order: Success
+  Order -->> Gateway: Order created (duplicate)
+  Gateway -->>- Client: 201 Created
+  Note right of DB: Two identical orders<br/>created for single request!
 ```
 
 With proper idempotency implementation, this scenario would be prevented:
@@ -108,8 +140,10 @@ sequenceDiagram
     Order->>DB: Insert order with unique key uuid-456
     DB-->>Order: Success (Order ID: 12345)
     Order-->>Gateway: Order created (ID: 12345)
+    Gateway --x Client: 201 Created
 
-    Note over Gateway: Network timeout<br/>before response received
+    Note over Gateway: Network timeout<br/>before client response received
+    Client ->> Gateway: Client App Retry<br> POST /orders
     Gateway->>Order: Retry - Create order with key uuid-456
     Order->>DB: Insert order with unique key uuid-456
     DB-->>Order: Duplicate key exception
