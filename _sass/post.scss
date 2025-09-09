@@ -15,6 +15,15 @@
   padding-top: 10px;
 }
 
+.post-content pre {
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.post-content code {
+  white-space: pre;
+}
+
 .post-content h2 {
   padding-bottom: 20px;
   padding-top: 20px;

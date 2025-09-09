@@ -1,5 +1,14 @@
 /* Rouge Syntax Highlighting Theme - Tomorrow Night */
-.highlight { background: #2d2d2d; color: #ccc; }
+.highlight { 
+  background: #2d2d2d; 
+  color: #ccc; 
+  overflow-x: auto;
+  white-space: pre;
+}
+.highlight pre {
+  overflow-x: auto;
+  white-space: pre;
+}
 .highlight .hll { background-color: #393939 }
 .highlight .c { color: #999999; font-style: italic } /* Comment */
 .highlight .err { color: #f2777a } /* Error */
