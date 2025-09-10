@@ -14,3 +14,33 @@
 {% if site.analytics.plausible.enabled  %}
 <script defer data-domain="{{ site.analytics.plausible.site_fqdn }}" src="{{ site.analytics.plausible.script_source }}"></script>
 {% endif %}
+
+{% comment %} Add JSON-LD Article schema for posts to improve search result appearance {% endcomment %}
+{% if page.layout == 'post' or page.collection == 'posts' %}
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "Article",
+	"mainEntityOfPage": {
+		"@type": "WebPage",
+		"@id": "{{ page.url | absolute_url }}"
+	},
+	"headline": "{{ page.title | escape }}",
+	"datePublished": "{{ page.date | date_to_xmlschema }}",
+	"dateModified": "{{ page.last_modified_at | default: page.date | date_to_xmlschema }}",
+	"author": {
+		"@type": "Person",
+		"name": "{{ page.author | default: site.author }}"
+	},
+	"publisher": {
+		"@type": "Organization",
+		"name": "{{ site.title | default: site.author }}",
+		"logo": {
+			"@type": "ImageObject",
+			"url": "{{ '/favicon.ico' | absolute_url }}"
+		}
+	},
+	"description": "{{ page.excerpt | strip_html | strip_newlines | truncate: 200 | escape }}"
+}
+</script>
+{% endif %}

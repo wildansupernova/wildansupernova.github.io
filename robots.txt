@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Sitemap: https://wildansupernova.github.io/sitemap.xml
+# If you want to disallow search engines from indexing staging or draft content,
+# add Disallow rules here. For production GitHub Pages, Allow / is typical.

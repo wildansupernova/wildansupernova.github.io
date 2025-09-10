@@ -1,12 +1,12 @@
 # Site Specific Configuration
-description: A simple Jekyll theme
-url: https://example.com
+description: Wildan's resume and blogs
+url: https://wildansupernova.github.io
 author: tajacks
-timezone: America/Toronto
-timezone_short: ET
+timezone: Asia/Jakarta
+timezone_short: WIB
 
 # Keywords
-keywords: ['seo', 'key', 'words']
+keywords: ['wildan', 'alnatara', 'blog', 'personal', 'resume', 'software engineering', 'engineering', 'education', 'portofolio']
 
 # Analytics (Plausible requires sign-up)
 analytics:
@@ -53,6 +53,7 @@ plugins:
   - jekyll-feed
   - jekyll-paginate-v2
   - jekyll-seo-tag
+  - jekyll-sitemap
 
 # Mermaid diagrams
 mermaid: true
